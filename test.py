@@ -1,19 +1,33 @@
-import mechanicalsoup
+from bs4 import BeautifulSoup
+import requests
 
-# 検索キーワードを入力する
-id_name = "itagaki-k"
-passcode1 = "Dwub7743?"
-# Google検索ページにアクセスする
-browser = mechanicalsoup.StatefulBrowser()
-browser.open("https://sso.i.meitec.com/sso/UI/Login?service=DesktopSSO_login&goto=https%3A%2F%2Fportal.i.meitec.com%3A443%2Fgroup%2Ffiels%2FHOME")
+url_list = ["https://url1", 
+            "https://url2", 
+            "https://url3"]
 
-# 検索フォームにキーワードを入力して検索する
-id = browser.select_form()
-id["IDToken1"] = id_name
-passcode = browser.select_form()
-passcode["IDToken2"] = passcode1
-browser.submit_selected()
+for url in url_list:
+    
+    response = requests.get(url)
 
-# 検索結果のタイトルとURLを取得する
-for link in browser.links():
-    print(link.text)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    if url == "https://url1":
+
+        text = soup.select('コンフルの値のパス/text()')[0]
+        if text != "コンフルの値":
+            print("コンフルの値 is wrong")
+
+        text = soup.select('コンフルの値のパス/text()')[0]
+        if text != "コンフルの値":
+            print("コンフルの値 is wrong")
+        
+    
+    elif url == "https://url2":
+
+        text = soup.select('コンフルの値のパス/text()')[0]
+        if text !=  "コンフルの値":
+            print("コンフルの値 is wrong")
+
+        text = soup.select('コンフルの値のパス/text()')[0]
+        if text !=  "コンフルの値":
+            print("コンフルの値 is wrong")
