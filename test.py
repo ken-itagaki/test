@@ -57,9 +57,10 @@ for url in url_list:
 
             session.post(page_url, data=login_data)
 
-            response = session.get("https://github.com/settings/profile")
-            
-            print(response.text)
+            response = session.get("https://github.com/")
+            soup = BeautifulSoup(response.content, "html.parser")
+            text = soup.get_text()
+            print(text)
 
 if a == 0:
     print("ok")
