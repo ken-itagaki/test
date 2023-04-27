@@ -44,25 +44,22 @@ for url in url_list:
 
     elif url == "https://github.com/login":
 
-        page_url = "https://github.com/settings/profile"
-        browser = mechanicalsoup.Browser()
+        page_url = "https://github.com/login"
+        
+        login_data = {
+            "login_field": "ken-itagaki",
+            "password": "Kenken99ken"
+        }
 
-        login_page = browser.get("https://github.com/login")
+        with requests.Session() as session:
 
-        login_form = login_page.soup.select("form")[0]
-        username_field = login_form.select("#login_field")[0]
-        password_field = login_form.select("#password")[0]
-        username_field["value"] = username
-        password_field["value"] = password
+            session.get(page_url)
 
-        browser.submit(login_form, login_page.url)
+            session.post(page_url, data=login_data)
 
-        response = requests.get(page_url)
-        #tree = html.fromstring(response.content)
-        #text = tree.xpath('/html/body/div[1]/div[6]/main/div/div[1]/div/div/h1/a/text()')[0]
-        text = response.text
-        print(text)
-
+            response = session.get("https://github.com/settings/profile")
+            
+            print(response.text)
 
 if a == 0:
     print("ok")
