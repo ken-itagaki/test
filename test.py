@@ -58,9 +58,10 @@ for url in url_list:
         browser.submit(login_form, login_page.url)
 
         response = requests.get(page_url)
+        soup = BeautifulSoup(response.content, "html.parser")
+        text = soup.get_text()
         #tree = html.fromstring(response.content)
         #text = tree.xpath('/html/body/div[1]/div[6]/main/div/div[1]/div/div/h1/a/text()')[0]
-        text = response.text
         print(text)
 
 
