@@ -47,7 +47,7 @@ for url in url_list:
         page_url = "https://github.com/settings/profile"
         browser = mechanicalsoup.Browser()
 
-        login_page = browser.get("https://github.com/login")
+        login_page = browser.get("https://github.com/settings/profile")
 
         login_form = login_page.soup.select("form")[0]
         username_field = login_form.select("#login_field")[0]
@@ -55,13 +55,10 @@ for url in url_list:
         username_field["value"] = username
         password_field["value"] = password
 
-        browser.submit(login_form, login_page.url)
+        logged_in_page = browser.submit(login_form, login_page.url)
 
-        response = requests.get(page_url)
-        soup = BeautifulSoup(response.content, "html.parser")
-        text = soup.get_text()
-        #tree = html.fromstring(response.content)
-        #text = tree.xpath('/html/body/div[1]/div[6]/main/div/div[1]/div/div/h1/a/text()')[0]
+        soup = BeautifulSoup(logged_in_page.content,'html.parser')
+        text = soup.select('#jobs_profile_131726731 p label')[0].text
         print(text)
 
 
