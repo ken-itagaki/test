@@ -1,66 +1,326 @@
-from bs4 import BeautifulSoup
-import requests
-from lxml import html
-import mechanicalsoup
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
+import time
 
-url_list = ["https://www.python.jp/",
-            "https://www.ruby-lang.org/ja/",
-            "https://github.com/login"]
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
+driver = webdriver.Chrome(options=options)
+#driver = webdriver.Chrome()
+driver.set_page_load_timeout(1)
 
-a=0
-username = "ken-itagaki"
-password = "Kenken99ken"
+count =0
 
-for url in url_list:
+def input(path,key):
+    input_element = driver.find_element(By.XPATH,path)
+    input_text = input_element.get_attribute("value")
+    if input_text != key:
+        print(input_text,"is wrong")
+        driver.find_element(By.XPATH,path).clear()
+        driver.find_element(By.XPATH,path).send_keys(key)
+        global count
+        count = 1
+
+def dropdown(path,key):
+    dropdown_element = driver.find_element(By.XPATH,path)
+    dropdown = Select(dropdown_element)
+    selected_option = dropdown.first_selected_option
+    selected_text = selected_option.text
+    if selected_text != key:
+        print(selected_text,"is wrong")
+        dropdown.select_by_visible_text(key)
+        global count
+        count = 1
+
+def radio(path,key):
+    radio_element = driver.find_element(By.XPATH,path)
+    if not radio_element.is_selected():
+        driver.find_element(By.TAG_NAME,"body").send_keys(Keys.END)
+        print(key,"is wrong")
+        time.sleep(2)
+        radio_element.click()
+        global count
+        count =1
+        time.sleep(3)
+        try:
+            alert = driver.switch_to.alert
+            alert.accept()
+        except:
+            pass
+
+def button(path):
+    driver.find_element(By.TAG_NAME,"body").send_keys(Keys.END)
+    time.sleep(2)
+    button = driver.find_element(By.XPATH,path)
+    button.click()
+    time.sleep(2)
+    try:
+        alert = driver.switch_to.alert
+        alert.accept()
+    except:
+        pass
+    print("save")
+    time.sleep(3)
+
+try:
+    driver.get('http://192.168.110.201/setting.html')
+    time.sleep(1)
+    radio('//*[@id="setting-sandby-off"]',"In Operation")
+    input('//*[@id="ip-address"]',"192.168.110.201")
+    input('//*[@id="ip-mask"]',"255.255.255.0")
+    input('//*[@id="ip-gateway"]',"192.168.110.1")
+    input('//*[@id="destination-ip"]',"255.255.255.255")
+    input('//*[@id="destination-lidar-port"]',"2321")
+    dropdown('//*[@id="setting-spin-rate"]',"600")
+    dropdown('//*[@id="setting-lidar-mode"]',"Dual Return")
+    dropdown('//*[@id="setting-udp-sequence"]',"OFF")
+    input('//*[@id="sync-angle"]',"180")
+    dropdown('//*[@id="setting-trigger-method"]',"Angle Based")
+    dropdown('//*[@id="setting-clock-source"]',"PTP")
+    dropdown('//*[@id="ptp_profile"]',"1588v2")
+    dropdown('//*[@id="ptp-network-transport"]',"UDP/IP")
+    input('//*[@id="ptp-domain-number"]',"0")
+    input('//*[@id="ptp-loginte-number"]',"1")
+    input('//*[@id="ptp-logsinte-number"]',"1")
+    input('//*[@id="ptp-logmdinte-number"]',"0")
+    dropdown('//*[@id="NoiseFilter"]',"ON")
+    dropdown('//*[@id="ReflectivityMapping"]',"Linear Mapping")
+
+    if count == 1:
+        button('//*[@id="save"]/button')
+
+    driver.get('http://192.168.110.201/config_angle.html')
+    count = 0
+    time.sleep(1)
+    dropdown('//*[@id="setting-lidar-range-method"]',"For all channels")
+    input('//*[@id="start-angle"]',"90.0")
+    input('//*[@id="end-angle"]',"270.0")
+
+    if count == 1:
+            button('//*[@id="save"]/button')
     
-    response = requests.get(url)
+    try:
+        driver.get('http://192.168.110.201/special_setting.html')
+        time.sleep(1)
+        element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="security-code"]')))
+        driver.find_element(By.XPATH,'//*[@id="security-code"]').send_keys("921223")
+        element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="save_code_range"]')))
+        button = driver.find_element(By.XPATH,'//*[@id="save_code_range"]')
+        button.click()
+        time.sleep(1)
+        try:
+            alert = driver.switch_to.alert
+            alert.accept() 
+        except:
+            pass
+    except:
+        pass
 
-    tree = html.fromstring(response.content)
+    time.sleep(1)
+    input('//*[@id="code-range-low"]',"205")
+    input('//*[@id="code-range-high"]',"205")
 
-    if url == "https://www.python.jp/":
+    if count == 1:
+        button('//*[@id="save_code_range"]')
+    print("OK")
 
-        text = tree.xpath('//*[@id="content-base"]/div/div/div[2]/div[1]/div/div[1]/h2/text()')[0]
-        if text != "Python3 ドキュメント":
-            print("コンフルの値1 is wrong")
-            a=1
+except TimeoutException:
+    try:
+        driver.get('http://192.168.110.202/setting.html')
+        time.sleep(1)
+        radio('//*[@id="setting-sandby-off"]',"In Operation")
+        input('//*[@id="ip-address"]',"192.168.110.202")
+        input('//*[@id="ip-mask"]',"255.255.255.0")
+        input('//*[@id="ip-gateway"]',"192.168.110.1")
+        input('//*[@id="destination-ip"]',"255.255.255.255")
+        input('//*[@id="destination-lidar-port"]',"2322")
+        dropdown('//*[@id="setting-spin-rate"]',"600")
+        dropdown('//*[@id="setting-lidar-mode"]',"Dual Return")
+        dropdown('//*[@id="setting-udp-sequence"]',"OFF")
+        input('//*[@id="sync-angle"]',"270")
+        dropdown('//*[@id="setting-trigger-method"]',"Angle Based")
+        dropdown('//*[@id="setting-clock-source"]',"PTP")
+        dropdown('//*[@id="ptp_profile"]',"1588v2")
+        dropdown('//*[@id="ptp-network-transport"]',"UDP/IP")
+        input('//*[@id="ptp-domain-number"]',"0")
+        input('//*[@id="ptp-loginte-number"]',"1")
+        input('//*[@id="ptp-logsinte-number"]',"1")
+        input('//*[@id="ptp-logmdinte-number"]',"0")
+        dropdown('//*[@id="NoiseFilter"]',"ON")
+        dropdown('//*[@id="ReflectivityMapping"]',"Linear Mapping")
 
-        text = tree.xpath('//*[@id="1geNZn"]/a[1]/text()')[0]
-        if text != "Discordサーバ":
-            print("コンフルの値2 is wrong")
-            a=1
+        if count == 1:
+            button('//*[@id="save"]/button')
+
+        driver.get('http://192.168.110.202/config_angle.html')
+        count = 0
+        time.sleep(1)
+        dropdown('//*[@id="setting-lidar-range-method"]',"For all channels")
+        input('//*[@id="start-angle"]',"90.0")
+        input('//*[@id="end-angle"]',"357.0")
+
+        if count == 1:
+            button('//*[@id="save"]/button')
         
-    
-    elif url == "https://www.ruby-lang.org/ja/":
+        try:
+            driver.get('http://192.168.110.202/special_setting.html')
+            time.sleep(1)
+            element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="security-code"]')))
+            driver.find_element(By.XPATH,'//*[@id="security-code"]').send_keys("921223")
+            element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="save_code_range"]')))
+            button = driver.find_element(By.XPATH,'//*[@id="save_code_range"]')
+            button.click()
+            time.sleep(1)
+            try:
+                alert = driver.switch_to.alert
+                alert.accept() 
+            except:
+                pass
+        except:
+            pass
 
-        text = tree.xpath('//*[@id="sidebar"]/div[1]/h3/strong/text()')[0]
-        if text !=  "はじめよう!":
-            print("コンフルの値3 is wrong")
-            a=1
+        time.sleep(1)
+        input('//*[@id="code-range-low"]',"210")
+        input('//*[@id="code-range-high"]',"210")
 
-        text = tree.xpath('//*[@id="content"]/div[2]/p[1]/text()')[0]
-        if text !=  "Ruby 3.1.4 がリリースされました。":
-            print(url, "コンフルの値4 is wrong")
-            a=1
+        if count == 1:
+            button('//*[@id="save_code_range"]')
+        print("OK")
 
-    elif url == "https://github.com/login":
+    except TimeoutException:
+        try:
+            driver.get('http://192.168.110.204/setting.html')
+            time.sleep(1)
+            radio('//*[@id="setting-sandby-off"]',"In Operation")
+            input('//*[@id="ip-address"]',"192.168.110.204")
+            input('//*[@id="ip-mask"]',"255.255.255.0")
+            input('//*[@id="ip-gateway"]',"192.168.110.1")
+            input('//*[@id="destination-ip"]',"255.255.255.255")
+            input('//*[@id="destination-lidar-port"]',"2324")
+            dropdown('//*[@id="setting-spin-rate"]',"600")
+            dropdown('//*[@id="setting-lidar-mode"]',"Dual Return")
+            dropdown('//*[@id="setting-udp-sequence"]',"OFF")
+            input('//*[@id="sync-angle"]',"0")
+            dropdown('//*[@id="setting-trigger-method"]',"Angle Based")
+            dropdown('//*[@id="setting-clock-source"]',"PTP")
+            dropdown('//*[@id="ptp_profile"]',"1588v2")
+            dropdown('//*[@id="ptp-network-transport"]',"UDP/IP")
+            input('//*[@id="ptp-domain-number"]',"0")
+            input('//*[@id="ptp-loginte-number"]',"1")
+            input('//*[@id="ptp-logsinte-number"]',"1")
+            input('//*[@id="ptp-logmdinte-number"]',"0")
+            dropdown('//*[@id="NoiseFilter"]',"ON")
+            dropdown('//*[@id="ReflectivityMapping"]',"Linear Mapping")
 
-        page_url = "https://github.com/settings/profile"
-        browser = mechanicalsoup.Browser()
+            if count == 1:
+                button('//*[@id="save"]/button')
 
-        login_page = browser.get("https://github.com/settings/profile")
+            driver.get('http://192.168.110.204/config_angle.html')
+            count = 0
+            time.sleep(1)
+            dropdown('//*[@id="setting-lidar-range-method"]',"For all channels")
+            input('//*[@id="start-angle"]',"90.0")
+            input('//*[@id="end-angle"]',"270.0")
 
-        login_form = login_page.soup.select("form")[0]
-        username_field = login_form.select("#login_field")[0]
-        password_field = login_form.select("#password")[0]
-        username_field["value"] = username
-        password_field["value"] = password
+            if count == 1:
+                button('//*[@id="save"]/button')
+            
+            try:
+                driver.get('http://192.168.110.204/special_setting.html')
+                time.sleep(1)
+                element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="security-code"]')))
+                driver.find_element(By.XPATH,'//*[@id="security-code"]').send_keys("921223")
+                element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="save_code_range"]')))
+                button = driver.find_element(By.XPATH,'//*[@id="save_code_range"]')
+                button.click()
+                time.sleep(1)
+                try:
+                    alert = driver.switch_to.alert
+                    alert.accept() 
+                except:
+                    pass
+            except:
+                pass
 
-        logged_in_page = browser.submit(login_form, login_page.url)
+            time.sleep(1)
+            input('//*[@id="code-range-low"]',"220")
+            input('//*[@id="code-range-high"]',"220")
 
-        soup = BeautifulSoup(logged_in_page.content,'html.parser')
-        text = soup.select('#jobs_profile_131726731 p label')[0].text
-        print(text)
+            if count == 1:
+                button('//*[@id="save_code_range"]')
+            print("OK")
+        except TimeoutException:
+            try:
+                driver.get('http://192.168.120.203/setting.html')
+                time.sleep(1)
+                radio('//*[@id="setting-sandby-off"]',"In Operation")
+                input('//*[@id="ip-address"]',"192.168.120.203")
+                input('//*[@id="ip-mask"]',"255.255.255.0")
+                input('//*[@id="ip-gateway"]',"192.168.120.1")
+                input('//*[@id="destination-ip"]',"255.255.255.255")
+                input('//*[@id="destination-lidar-port"]',"2323")
+                dropdown('//*[@id="setting-spin-rate"]',"600")
+                dropdown('//*[@id="setting-lidar-mode"]',"Dual Return")
+                dropdown('//*[@id="setting-udp-sequence"]',"OFF")
+                input('//*[@id="sync-angle"]',"270")
+                dropdown('//*[@id="setting-trigger-method"]',"Angle Based")
+                dropdown('//*[@id="setting-clock-source"]',"PTP")
+                dropdown('//*[@id="ptp_profile"]',"1588v2")
+                dropdown('//*[@id="ptp-network-transport"]',"UDP/IP")
+                input('//*[@id="ptp-domain-number"]',"0")
+                input('//*[@id="ptp-loginte-number"]',"1")
+                input('//*[@id="ptp-logsinte-number"]',"1")
+                input('//*[@id="ptp-logmdinte-number"]',"0")
+                dropdown('//*[@id="NoiseFilter"]',"ON")
+                dropdown('//*[@id="ReflectivityMapping"]',"Linear Mapping")
+
+                if count == 1:
+                    button('//*[@id="save"]/button')
+
+                driver.get('http://192.168.120.203/config_angle.html')
+                count = 0
+                time.sleep(1)
+                dropdown('//*[@id="setting-lidar-range-method"]',"For all channels")
+                input('//*[@id="start-angle"]',"3.0")
+                input('//*[@id="end-angle"]',"270.0")
+
+                if count == 1:
+                    button('//*[@id="save"]/button')
+                
+                try:
+                    driver.get('http://192.168.110.202/special_setting.html')
+                    time.sleep(1)
+                    element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="security-code"]')))
+                    driver.find_element(By.XPATH,'//*[@id="security-code"]').send_keys("921223")
+                    element = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="save_code_range"]')))
+                    button = driver.find_element(By.XPATH,'//*[@id="save_code_range"]')
+                    button.click()
+                    time.sleep(1)
+                    try:
+                        alert = driver.switch_to.alert
+                        alert.accept() 
+                    except:
+                        pass
+                except:
+                    pass
+
+                time.sleep(1)
+                input('//*[@id="code-range-low"]',"215")
+                input('//*[@id="code-range-high"]',"215")
+
+                if count == 1:
+                    button('//*[@id="save_code_range"]')
+                print("OK")
+            except TimeoutException:
+                print("アクセスできませんでした")
+finally:
+    driver.quit()
 
 
-if a == 0:
-    print("ok")
